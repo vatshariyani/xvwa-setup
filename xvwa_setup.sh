@@ -6,17 +6,65 @@
 
 # Function to display banner
 display_banner() {
-    cat << "EOF"
-__  __       __    __  _     __      _
-\ \/ /\   /\/ / /\ \ \/_\   / _\ ___| |_ _   _ _ __
- \  /\ \ / /\ \/  \/ //_\\  \ \ / _ \ __| | | | '_ \
- /  \ \ V /  \  /\  /  _  \ _\ \  __/ |_| |_| | |_) |
-/_/\_\ \_/    \/  \/\_/ \_/ \__/\___|\__|\__,_| .__/
-                                              |_|
- >> Project Repo: https://github.com/s4n7h0/xvwa
- >> Scripted by: Vats Hariyani
+# Obtener prefijo de idioma / Get language prefix
+lang_prefix="${LANG:0:2}"
 
-EOF
+# Function for verifying the language and displaying the corresponding message
+get_language_message() {
+    if [[ $lang_prefix -eq "es" ]]; then
+        echo -e "$1"
+    else
+        echo -e "$2"
+    fi
+}
+
+# Function for centering text on a line of specified length
+center_text() {
+    local text="$1"
+    local line_length="$2"
+    local text_length=${#text}
+    local padding_before=$(( (line_length - text_length) / 2 ))
+    local padding_after=$(( line_length - text_length - padding_before ))
+    
+    printf "%s%-${padding_before}s%s%-*s%s\n" "║" " " "$text" "$padding_after" " " "║"
+}
+# Desired line length
+line_length=60
+# ASCII Art
+echo -e "\033[96m\033[1m
+
+                ██╗    ██╗
+                ╚██╗  ██╔╝██╗   ██╗██╗    ██╗ █████╗                    
+                 ╚██╗██╔╝ ██║   ██║██║    ██║██╔══██╗                   
+                  ╚███╔╝  ██║   ██║██║ █╗ ██║███████║                   
+                  ██╔██╗  ╚██╗ ██╔╝██║███╗██║██╔══██║                   
+                 ██╔╝ ╚██╗ ╚████╔╝ ╚███╔███╔╝██║  ██║                   
+                 ╚═╝   ╚═╝  ╚═══╝   ╚══╝╚══╝ ╚═╝  ╚═╝                   
+                                                                        
+  ██╗███╗   ██╗███████╗████████╗ █████╗ ██╗     ██╗     ███████╗██████╗ 
+  ██║████╗  ██║██╔════╝╚══██╔══╝██╔══██╗██║     ██║     ██╔════╝██╔══██╗
+  ██║██╔██╗ ██║███████╗   ██║   ███████║██║     ██║     █████╗  ██████╔╝
+  ██║██║╚██╗██║╚════██║   ██║   ██╔══██║██║     ██║     ██╔══╝  ██╔══██╗
+  ██║██║ ╚████║███████║   ██║   ██║  ██║███████╗███████╗███████╗██║  ██║
+  ╚═╝╚═╝  ╚═══╝╚══════╝   ╚═╝   ╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝╚═╝  ╚═╝     
+\033[0m"
+echo
+echo -e "\033[92m╓────────────────────────────────────────────────────────────╖"
+center_text "$(get_language_message "Welcome to the XVWA setup!" "¡Bienvenido al instalador de XVWA!")" "$line_length"
+center_text "$(get_language_message "Script Name: xvwa_setup.sh " "Nombre del Script: xvwa_setup.sh ")" "$line_length"
+center_text "$(get_language_message "Script Author: Vats Hariyani " " Script Autor: Vats Hariyani ")" "$line_length"
+center_text "$(get_language_message "Setup Git Repo: https://github.com/vatshariyani/xvwa-setup" "Setup Git Repo: https://github.com/vatshariyani/xvwa-setup")" "$line_length"
+center_text "$(get_language_message "XVWA Github Repo: https://github.com/s4n7h0/xvwa" "XVWA GitHub Repo: https://github.com/s4n7h0/xvwa")" "$line_length"
+center_text "$(get_language_message "Installer Version: 1.0 " "Versión del Instalador: 1.0")" "$line_length"
+echo -e "╙────────────────────────────────────────────────────────────╜\033[0m"
+echo
+# Check if the user is root
+if [ "$EUID" -ne 0 ]; then
+    error_message=$(get_language_message "\e[91mThis script must be run by the root user.\e[0m" "\e[91mEste script debe ejecutarse como usuario root.\e[0m")
+    echo -e "$error_message"
+    exit 1
+fi
+
 }
 
 # Function to check if a package is installed
@@ -104,12 +152,30 @@ clone_and_configure_xvwa() {
     # Grant privileges to access urdatabase
     mysql -u "$uname" -p"$pass" -e "GRANT ALL PRIVILEGES ON urdatabase.* TO '$uname'@'localhost' IDENTIFIED BY '$pass'"
 
+    success_message="\e[92mXVWA has been installed successfully. Access \e[93mhttp://localhost/xvwa"
+    echo -e "$success_message"
+
+    #Mostrar al usuario las credenciales después de la configuración / Show user credentials after configuration
+    credentials_after_setup_message="\e[92mCredentials:\e[0m"
+    echo -e "$credentials_after_setup_message"
+    echo -e "Username: \033[93madmin\033[0m"
+    echo -e "Password: \033[93madmin\033[0m"
+
+    # End of installer
+    echo
+    final_message="\033[95mWith ♡ by Vats Hariyani"
+    echo -e "$final_message"
     echo "XVWA Setup Finished Successfully. Happy hacking and happy learning!"
 }
 
 # Main script starts here
 clear
 display_banner
+# Update repositories
+update_message="\e[96mUpdating repositories...\e[0m"
+echo -e "$update_message"
+apt update
+
 
 # Check if MySQL package is installed
 if ! check_package_installed mysql-server; then
@@ -153,6 +219,7 @@ echo -n "Enter the full web root path: "
 read -r webroot
 
 # Clone XVWA from GitHub and configure
+
 if [[ -d "$webroot/xvwa" ]]; then
     echo -n "Folder $webroot/xvwa already exists. Do you want to clean and build a fresh latest copy? (Y/N) "
     read -r clean_flag
